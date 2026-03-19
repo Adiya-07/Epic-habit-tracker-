@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Epic Habit RPG - Gamified Habit Tracker</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      overflow-x: hidden;
+    }
+
+    #root {
+      min-height: 100vh;
+    }
+
+    .app {
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .app.dark {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      color: #e0e0e0;
+    }
+
+    .app.light {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      color: #1a1a1a;
+    }
+
+    .app-header {
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      padding: 1.5rem 2rem;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-content h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffd700, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.25rem;
+    }
+
+    .header-quote {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      font-style: italic;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .main-container {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .sidebar {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      height: fit-content;
+      position: sticky;
+      top: 120px;
+    }
+
+    .character-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .character-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .avatar-large {
+      font-size: 4rem;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 50%;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .character-info h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .title {
+      color: #ffd700;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .level-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .xp-bar-container {
+      margin: 1rem 0;
+    }
+
+    .xp-bar {
+      width: 100%;
+      height: 24px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .xp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4facfe, #00f2fe);
+      transition: width 0.5s ease;
+      box-shadow: 0 0 20px rgba(79, 172, 254, 0.6);
+    }
+
+    .xp-text {
+      display: block;
+      text-align: center;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .resources {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .resource {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 215, 0, 0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      font-weight: 600;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-item {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s;
+    }
+
+    .stat-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 10px;
+      font-size: 1.2rem;
+    }
+
+    .stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-name {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffd700;
+    }
+
+    .content {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      min-height: 600px;
+    }
+
+    .view-nav {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .view-nav button {
+      background: none;
+      border: none;
+      color: inherit;
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: all 0.3s;
+      border-bottom: 3px solid transparent;
+    }
+
+    .view-nav button:hover {
+      opacity: 0.8;
+    }
+
+    .view-nav button.active {
+      opacity: 1;
+      border-bottom-color: #ffd700;
+    }
+
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: none;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .empty-state h3 {
+      margin: 1rem 0 0.5rem 0;
+      font-size: 1.5rem;
+    }
+
+    .empty-state p {
+      margin-bottom: 1.5rem;
+      opacity: 0.8;
+    }
+
+    .habit-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 1rem;
+      transition: all 0.3s;
+    }
+
+    .habit-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateX(5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .habit-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .habit-left {
+      display: flex;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .complete-btn {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      color: white;
+      font-size: 1.2rem;
+    }
+
+    .complete-btn:hover:not(:disabled) {
+      border-color: #4facfe;
+      background: rgba(79, 172, 254, 0.1);
+      transform: scale(1.1);
+    }
+
+    .complete-btn.checked {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      border-color: #4facfe;
+    }
+
+    .habit-title-row h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-left: 1rem;
+    }
+
+    .notification {
+      position: fixed;
+      top: 100px;
+      right: 2rem;
+      background: rgba(30, 30, 30, 0.95);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      z-index: 1500;
+      animation: slideInRight 0.3s, slideOutRight 0.3s 2.7s;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-left: 4px solid #4facfe;
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes slideOutRight {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(400px); opacity: 0; }
+    }
+
+    .level-up-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      animation: levelUpFade 4s forwards;
+    }
+
+    @keyframes levelUpFade {
+      0%, 70% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .level-up-content {
+      text-align: center;
+      animation: levelUpScale 0.5s;
+    }
+
+    @keyframes levelUpScale {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .level-up-content h1 {
+      font-size: 4rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffd700, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 2rem 0 1rem 0;
+    }
+
+    .level-display {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #ffd700;
+      margin-bottom: 0.5rem;
+    }
+
+    @media (max-width: 1200px) {
+      .main-container {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: relative;
+        top: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .app-header {
+        padding: 1rem;
+      }
+
+      .header-content h1 {
+        font-size: 1.5rem;
+      }
+
+      .main-container {
+        padding: 1rem;
+        gap: 1rem;
+      }
+
+      .sidebar, .content {
+        padding: 1.5rem;
+      }
+
+      .avatar-large {
+        width: 60px;
+        height: 60px;
+        font-size: 3rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function EpicHabitRPG() {
+      const [habits, setHabits] = useState([]);
+      const [character, setCharacter] = useState({
+        name: 'Adventurer',
+        title: 'Novice',
+        level: 1,
+        xp: 0,
+        xpToNext: 100,
+        stats: { 
+          strength: 10, 
+          charm: 10, 
+          wisdom: 10, 
+          vitality: 10
+        },
+        gold: 0,
+        avatar: '🧙'
+      });
+      const [view, setView] = useState('today');
+      const [notification, setNotification] = useState(null);
+      const [showLevelUp, setShowLevelUp] = useState(false);
+
+      useEffect(() => {
+        loadData();
+        checkDailyReset();
+      }, []);
+
+      useEffect(() => {
+        const timeoutId = setTimeout(() => saveData(), 1000);
+        return () => clearTimeout(timeoutId);
+      }, [habits, character]);
+
+      const loadData = async () => {
+        try {
+          const habitsRes = await window.storage.get('epic_habits').catch(() => null);
+          const charRes = await window.storage.get('epic_character').catch(() => null);
+
+          if (habitsRes?.value) setHabits(JSON.parse(habitsRes.value));
+          if (charRes?.value) setCharacter(JSON.parse(charRes.value));
+        } catch (error) {
+          console.log('Starting fresh adventure!');
+        }
+      };
+
+      const saveData = async () => {
+        try {
+          await Promise.all([
+            window.storage.set('epic_habits', JSON.stringify(habits)),
+            window.storage.set('epic_character', JSON.stringify(character))
+          ]);
+        } catch (error) {
+          console.error('Save failed:', error);
+        }
+      };
+
+      const checkDailyReset = () => {
+        const lastReset = localStorage.getItem('lastReset');
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (lastReset !== today) {
+          resetDailyHabits();
+          localStorage.setItem('lastReset', today);
+        }
+      };
+
+      const resetDailyHabits = () => {
+        setHabits(prev => prev.map(habit => ({
+          ...habit,
+          completedToday: false
+        })));
+      };
+
+      const addHabit = () => {
+        const name = prompt('Enter habit name:');
+        if (!name) return;
+
+        const newHabit = {
+          id: Date.now(),
+          name,
+          category: 'health',
+          difficulty: 'medium',
+          priority: 'medium',
+          createdAt: new Date().toISOString(),
+          streak: 0,
+          longestStreak: 0,
+          completedToday: false,
+          completedDates: [],
+          totalCompletions: 0
+        };
+        
+        setHabits(prev => [...prev, newHabit]);
+        showNotification('⚔️ New quest accepted!');
+      };
+
+      const completeHabit = (habitId) => {
+        const habit = habits.find(h => h.id === habitId);
+        if (!habit || habit.completedToday) return;
+
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        
+        let newStreak = 1;
+        if (habit.completedDates.length > 0) {
+          const lastCompleted = habit.completedDates[habit.completedDates.length - 1];
+          if (lastCompleted === yesterday) {
+            newStreak = habit.streak + 1;
+          }
+        }
+
+        const updatedHabit = {
+          ...habit,
+          completedToday: true,
+          completedDates: [...habit.completedDates, today],
+          totalCompletions: habit.totalCompletions + 1,
+          streak: newStreak,
+          longestStreak: Math.max(newStreak, habit.longestStreak)
+        };
+
+        setHabits(prev => prev.map(h => h.id === habitId ? updatedHabit : h));
+
+        const xpGain = 20;
+        const goldGain = 5;
+        gainXP(xpGain, goldGain);
+        
+        showNotification(`+${xpGain} XP | +${goldGain} Gold | Quest Complete! 🎯`);
+      };
+
+      const uncompleteHabit = (habitId) => {
+        const habit = habits.find(h => h.id === habitId);
+        if (!habit || !habit.completedToday) return;
+
+        const today = new Date().toISOString().split('T')[0];
+        
+        setHabits(prev => prev.map(h => {
+          if (h.id === habitId) {
+            return {
+              ...h,
+              completedToday: false,
+              completedDates: h.completedDates.filter(d => d !== today),
+              totalCompletions: Math.max(0, h.totalCompletions - 1)
+            };
+          }
+          return h;
+        }));
+
+        showNotification('Quest progress reversed');
+      };
+
+      const gainXP = (xp, gold) => {
+        setCharacter(prev => {
+          let newXP = prev.xp + xp;
+          let newLevel = prev.level;
+          let newXPToNext = prev.xpToNext;
+          let leveledUp = false;
+
+          while (newXP >= newXPToNext) {
+            newXP -= newXPToNext;
+            newLevel += 1;
+            newXPToNext = Math.floor(newXPToNext * 1.5);
+            leveledUp = true;
+          }
+
+          const newStats = { ...prev.stats };
+          if (leveledUp) {
+            Object.keys(newStats).forEach(stat => {
+              newStats[stat] += 1;
+            });
+          }
+
+          const updated = {
+            ...prev,
+            xp: newXP,
+            level: newLevel,
+            xpToNext: newXPToNext,
+            gold: prev.gold + gold,
+            stats: newStats,
+            title: getTitleForLevel(newLevel)
+          };
+
+          if (leveledUp) {
+            setShowLevelUp(true);
+            setTimeout(() => setShowLevelUp(false), 4000);
+          }
+
+          return updated;
+        });
+      };
+
+      const getTitleForLevel = (level) => {
+        if (level >= 50) return 'Champion';
+        if (level >= 30) return 'Veteran Warrior';
+        if (level >= 20) return 'Skilled Adventurer';
+        if (level >= 10) return 'Apprentice';
+        return 'Novice';
+      };
+
+      const showNotification = (message) => {
+        setNotification(message);
+        setTimeout(() => setNotification(null), 3000);
+      };
+
+      const activeHabits = habits.filter(h => !h.archived);
+      const completedToday = activeHabits.filter(h => h.completedToday).length;
+      const totalActive = activeHabits.length;
+
+      return (
+        <div className="app dark">
+          {showLevelUp && (
+            <div className="level-up-overlay">
+              <div className="level-up-content">
+                <div style={{fontSize: '5rem'}}>👑</div>
+                <h1>LEVEL UP!</h1>
+                <div className="level-display">Level {character.level}</div>
+                <p className="title" style={{fontSize: '1.5rem'}}>{character.title}</p>
+              </div>
+            </div>
+          )}
+
+          {notification && (
+            <div className="notification">{notification}</div>
+          )}
+
+          <header className="app-header">
+            <div className="header-content">
+              <h1>⚔️ Epic Habit RPG</h1>
+              <div className="header-quote">Today is your epic quest!</div>
+            </div>
+          </header>
+
+          <div className="main-container">
+            <aside className="sidebar">
+              <div className="character-panel">
+                <div className="character-header">
+                  <div className="avatar-large">{character.avatar}</div>
+                  <div className="character-info">
+                    <h2>{character.name}</h2>
+                    <p className="title">{character.title}</p>
+                    <div className="level-badge">Level {character.level}</div>
+                  </div>
+                </div>
+
+                <div className="xp-bar-container">
+                  <div className="xp-bar">
+                    <div 
+                      className="xp-fill" 
+                      style={{ width: `${(character.xp / character.xpToNext) * 100}%` }}
+                    />
+                  </div>
+                  <span className="xp-text">{character.xp} / {character.xpToNext} XP</span>
+                </div>
+
+                <div className="resources">
+                  <div className="resource">
+                    <span style={{fontSize: '1.2rem'}}>💰</span>
+                    <span>{character.gold}</span>
+                  </div>
+                </div>
+
+                <div className="stats-grid">
+                  {Object.entries(character.stats).map(([stat, value]) => (
+                    <div key={stat} className="stat-item">
+                      <div className="stat-icon">
+                        {stat === 'strength' && '⚔️'}
+                        {stat === 'charm' && '✨'}
+                        {stat === 'wisdom' && '📚'}
+                        {stat === 'vitality' && '❤️'}
+                      </div>
+                      <div className="stat-info">
+                        <span className="stat-name">{stat}</span>
+                        <span className="stat-value">{value}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </aside>
+
+            <main className="content">
+              <nav className="view-nav">
+                <button 
+                  className={view === 'today' ? 'active' : ''} 
+                  onClick={() => setView('today')}
+                >
+                  🏠 Today
+                </button>
+                <button 
+                  className={view === 'all' ? 'active' : ''} 
+                  onClick={() => setView('all')}
+                >
+                  🎯 All Quests
+                </button>
+              </nav>
+
+              <div className="controls-bar">
+                <div></div>
+                <button onClick={addHabit} className="btn-primary">
+                  ➕ New Quest
+                </button>
+              </div>
+
+              <div>
+                {totalActive === 0 ? (
+                  <div className="empty-state">
+                    <div style={{fontSize: '4rem'}}>🎯</div>
+                    <h3>No active quests!</h3>
+                    <p>Create your first habit to begin your adventure!</p>
+                    <button onClick={addHabit} className="btn-primary">
+                      ➕ Create Quest
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      padding: '1.5rem',
+                      borderRadius: '12px',
+                      marginBottom: '1rem'
+                    }}>
+                      <h3>Today's Progress</h3>
+                      <div style={{
+                        width: '100%',
+                        height: '20px',
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        margin: '1rem 0'
+                      }}>
+                        <div style={{
+                          height: '100%',
+                          width: `${(completedToday / totalActive) * 100}%`,
+                          background: 'linear-gradient(90deg, #4facfe, #00f2fe)',
+                          transition: 'width 0.5s ease'
+                        }} />
+                      </div>
+                      <p style={{textAlign: 'center'}}>{completedToday} / {totalActive} completed</p>
+                    </div>
+
+                    {activeHabits.map(habit => (
+                      <div key={habit.id} className="habit-card">
+                        <div className="habit-main">
+                          <div className="habit-left">
+                            <button 
+                              className={`complete-btn ${habit.completedToday ? 'checked' : ''}`}
+                              onClick={() => habit.completedToday ? uncompleteHabit(habit.id) : completeHabit(habit.id)}
+                            >
+                              {habit.completedToday ? '✓' : ''}
+                            </button>
+                            
+                            <div style={{flex: 1}}>
+                              <div className="habit-title-row">
+                                <h3>
+                                  {habit.name}
+                                  {habit.streak > 0 && (
+                                    <span className="streak-badge">
+                                      🔥 {habit.streak}
+                                    </span>
+                                  )}
+                                </h3>
+                              </div>
+                              
+                              <div style={{fontSize: '0.85rem', opacity: 0.7, marginTop: '0.5rem'}}>
+                                <span>✅ {habit.totalCompletions}</span>
+                                <span style={{marginLeft: '1rem'}}>🔥 Best: {habit.longestStreak}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<EpicHabitRPG />);
+  </script>
+</body>
+</html>
